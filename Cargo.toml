@@ -1,0 +1,33 @@
+[package]
+name = "freqdash"
+version = "0.1.0"
+edition = "2021"
+
+# Declaración de binarios
+[[bin]]
+name = "cli"
+path = "src/bin/cli.rs"
+
+[[bin]]
+name = "gui"
+path = "src/bin/gui.rs"
+
+[dependencies]
+# Comunes
+tokio = { version = "1", features = ["full"] }
+tokio-postgres = "0.7"
+once_cell = "1.18"
+dotenvy = "0.15"
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+csv = "1.3.1"
+
+# Opcionales
+clap = { version = "4.5", features = ["derive"], optional = true }
+gtk4 = { version = "0.10", optional = true }
+glib = { version = "0.21", optional = true}
+
+[features]
+default = []
+cli = ["dep:clap"]
+gtk = ["dep:gtk4", "dep:glib"]

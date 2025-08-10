@@ -1,0 +1,36 @@
+use std::collections::HashMap;
+use serde::Serialize;
+
+#[derive(Debug, Serialize, Clone)]
+pub struct StrategyGridRow {
+    pub strategy: String,
+    pub timeframe: String,
+    pub minimal_roi: String,
+    pub stoploss: String,
+    pub max_open_trades: i32,
+    pub trailing_stop: bool,
+    pub trailing_stop_positive: Option<f64>,
+    pub trailing_stop_positive_offset: Option<f64>,
+    pub trailing_only_offset_is_reached: bool,
+    pub entry_price: String,
+    pub exit_price: String,
+    pub check_depth_of_market_enable: bool,
+    pub total_profit: f64,
+    pub total_trades: i32,
+    pub wins: i32,
+    pub win_rate: f64,
+    pub win_time: f64,
+    pub drawdown_perc: f64,
+    pub rejected_signals: f64,
+    pub neg_months: usize,
+    pub avg_monthly_profit: f64,
+    pub std_monthly_profit: f64,
+    pub max_profit_month: f64,
+    pub min_profit_month: f64,
+    pub avg_trade_profit: f64,
+    pub losses: i32,
+    pub loss_rate: f64,
+    pub expectancy: f64,
+    pub profit_factor: f64,
+    pub monthly: HashMap<String, f64>,
+}
