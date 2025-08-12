@@ -1,23 +1,21 @@
 // src/gui_adw/events/handlers.rs
 
-use super::{connect_export, connect_filters, connect_query}; // Importar desde el módulo padre
-use crate::gui_adw::state::AppState;
-use gtk4::{Box, TreeView};
-use std::cell::RefCell;
+use gtk4::{Box as GtkBox, TreeView};
 use std::rc::Rc;
-use std::sync::Arc;
-use tokio::runtime::Runtime;
+use std::cell::RefCell;
 
-/// Función principal para conectar todos los eventos
+use crate::gui_adw::state::AppState;
+use super::{query, filters, export}; // Importamos los módulos de eventos
+
+// Renombramos la función para que sea más clara y aceptamos el TreeView
 pub fn connect_all(
-    left_panel: &Box,
-    right_panel: &Box,
-    table_view: &TreeView,
-    state: &Rc<RefCell<AppState>>//,
-    //rt: Arc<Runtime>,
+    left_panel: &GtkBox,
+    right_panel: &GtkBox,
+    tree_view: &TreeView,
+    state: &Rc<RefCell<AppState>>,
 ) {
-    //connect_query(left_panel, right_panel, state, rt.clone());
-    connect_query(left_panel, right_panel, state);
-    connect_filters(left_panel, state);
-    connect_export(right_panel, table_view, state);
+    // Pasamos el TreeView a los módulos que lo necesiten
+    query::connect(left_panel, right_panel, tree_view, state);
+    filters::connect(left_panel, state);
+    export::connect(right_panel, tree_view, state);
 }
