@@ -1,0 +1,54 @@
+Box vs Paned
+
+fn build_ui(app: &Application) {
+    // ... (configuración inicial de window y header_bar igual)
+
+    // Contenedor principal - Usa Box pero controla la expansión
+    let main_box = Box::new(Orientation::Horizontal, 0);
+    
+    // Panel izquierdo - Fija el ancho y desactiva expansión
+    let left_panel = ui::left_panel::create();
+    left_panel.set_size_request(350, -1);  // Ancho fijo de 350px
+    left_panel.set_hexpand(false);         // 👈 Clave: desactiva expansión horizontal
+    
+    // Panel derecho - Permite expansión
+    let (right_panel, table_view, filter_model) = ui::create_right_panel();
+    right_panel.set_hexpand(true);         // 👈 Expansión habilitada
+    
+    // Separador - También debe evitar expansión
+    let separator = Separator::new(Orientation::Vertical);
+    separator.set_hexpand(false);
+    
+    // Ensamblar la UI
+    main_box.append(&left_panel);
+    main_box.append(&separator);
+    main_box.append(&right_panel);
+    
+    // Configurar ToolbarView (sin cambios)
+    toolbar_view.set_content(Some(&main_box));
+    
+    // ... (resto del código igual)
+}
+
+
+fn build_ui(app: &Application) {
+    // ... (configuración inicial igual)
+
+    // Usar Paned en lugar de Box
+    let paned = Paned::new(Orientation::Horizontal);
+    
+    // Panel izquierdo - Fijo
+    let left_panel = ui::left_panel::create();
+    paned.set_start_child(Some(&left_panel));
+    paned.set_shrink_start_child(false);  // 👈 Evita compresión
+    paned.set_resize_start_child(false);  // 👈 Bloquea redimensionamiento
+    
+    // Panel derecho - Expansible
+    let (right_panel, table_view, filter_model) = ui::create_right_panel();
+    paned.set_end_child(Some(&right_panel));
+    
+    // Configurar ToolbarView
+    toolbar_view.set_content(Some(&paned));
+    
+    // ... (resto del código igual)
+}
