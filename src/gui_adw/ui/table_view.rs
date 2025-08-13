@@ -1,12 +1,11 @@
 // src/gui_adw/ui/table_view.rs
 
-use gtk4::prelude::*;
-use gtk4::{
-    CellRendererText, ListStore, SelectionMode, TreeModelFilter,
-    TreeView, TreeViewColumn,
-};
 use glib::Type;
 use gtk4::pango::Style;
+use gtk4::prelude::*;
+use gtk4::{CellRendererText, ListStore, SelectionMode, TreeModelFilter, TreeView, TreeViewColumn};
+use gtk4::CenterBox;
+use gtk4::Label;
 
 
 /// Crea la vista de tabla con el modelo filtrado y estilo Adwaita
@@ -18,11 +17,9 @@ pub fn create(filter_model: &TreeModelFilter) -> TreeView {
     // set_show_row_separators no existe en GTK4, usar CSS en su lugar
 
     setup_columns(&tree_view);
-    
+
     // Habilitar selección múltiple
-    tree_view
-        .selection()
-        .set_mode(SelectionMode::Multiple);
+    tree_view.selection().set_mode(SelectionMode::Multiple);
 
     tree_view
 }
@@ -112,11 +109,13 @@ fn setup_columns(tree_view: &TreeView) {
 
 /// Configura el renderizado de cada celda con estilos mejorados
 fn setup_cell_renderer(col: &TreeViewColumn, cell: &CellRendererText, column_id: i32) {
-    // Aplicar padding uniforme
-    cell.set_padding(8, 4);
-    
+    cell.set_padding(8, 4); // Aplicar padding uniforme
+    cell.set_property("xalign", 1.0_f32); //Alinear todo a la derecha por defecto
+                                          //cell.set_property("xalign", 0.5_f32); // <-- Centrar
+                                          //cell.set_property("xalign", 0.0_f32); // <-- Alinear a la izquierda
+
     match column_id {
-        3 => format_stop_loss(col, cell),
+        // 3 => format_stop_loss(col, cell),
         5 => format_trailing_stop(col, cell),
         12 => format_total_profit(col, cell),
         15 => format_win_rate(col, cell),
@@ -152,7 +151,7 @@ fn format_trailing_stop(col: &TreeViewColumn, cell: &CellRendererText) {
 fn format_total_profit(col: &TreeViewColumn, cell: &CellRendererText) {
     col.set_cell_data_func(cell, move |_col, cell, model, iter| {
         if let Ok(value) = model.get_value(&iter, 12).get::<f64>() {
-            let text = format!("{:.2}%", value);
+            let text = format!("{:.1}%", value * 100.0);
             let (color, weight) = if value > 10.0 {
                 ("#2ec27e", 700) // Verde brillante para muy bueno
             } else if value > 0.0 {
@@ -198,13 +197,13 @@ fn format_win_time(col: &TreeViewColumn, cell: &CellRendererText) {
             let remaining_seconds = total_seconds % 86400;
             let hours = remaining_seconds / 3600;
             let minutes = (remaining_seconds % 3600) / 60;
-            
+
             let text = if days > 0 {
                 format!("{}d {:02}h:{:02}m", days, hours, minutes)
             } else {
                 format!("{:02}h:{:02}m", hours, minutes)
             };
-            
+
             cell.set_property("text", &text);
             cell.set_property("font", "Monospace");
             cell.set_property("xalign", 1.0f32);
@@ -215,8 +214,9 @@ fn format_win_time(col: &TreeViewColumn, cell: &CellRendererText) {
 fn format_drawdown(col: &TreeViewColumn, cell: &CellRendererText) {
     col.set_cell_data_func(cell, move |_col, cell, model, iter| {
         if let Ok(value) = model.get_value(&iter, 17).get::<f64>() {
-            let text = format!("-{:.2}%", value.abs());
-            let (color, weight) = if value < 5.0 {
+            let percentage = value * 100.0;
+            let text = format!("-{:.1}%", percentage.abs());
+            let (color, weight) = if percentage < 5.0 {
                 ("#57e389", 500)
             } else if value < 10.0 {
                 ("#f6d32d", 600)
@@ -268,8 +268,6 @@ fn format_profit_factor(col: &TreeViewColumn, cell: &CellRendererText) {
             cell.set_property("text", &text);
             cell.set_property("foreground", color);
             cell.set_property("weight", weight);
-            //cell.set_property("style", style);
-            // En tu función donde configuras el cell renderer:
             cell.set_property("style", &Style::Normal);
         }
     });
@@ -280,9 +278,10 @@ fn format_integer(col: &TreeViewColumn, cell: &CellRendererText, column_id: i32)
         if let Ok(value) = model.get_value(&iter, column_id).get::<i32>() {
             let text = value.to_string();
             cell.set_property("text", &text);
-            
+
             // Aplicar colores especiales para ciertas columnas
-            if column_id == 19 && value > 0 { // Meses negativos
+            if column_id == 19 && value > 0 {
+                // Meses negativos
                 cell.set_property("foreground", "#ff7800");
                 cell.set_property("weight", 600);
             }
@@ -292,11 +291,14 @@ fn format_integer(col: &TreeViewColumn, cell: &CellRendererText, column_id: i32)
 
 fn format_text(col: &TreeViewColumn, cell: &CellRendererText, column_id: i32) {
     col.add_attribute(cell, "text", column_id);
-    
+
     // Aplicar estilos especiales para ciertas columnas
-    if column_id == 0 { // Estrategia
+    if column_id == 0 {
+        // Estrategia
         cell.set_property("weight", 600);
-    } else if column_id == 1 { // Timeframe
+        cell.set_property("xalign", 0.0_f32); // <-- Alinear a la izquierda
+    } else if column_id == 1 {
+        // Timeframe
         cell.set_property("font", "Monospace");
     }
 }

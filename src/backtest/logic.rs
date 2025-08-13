@@ -4,16 +4,13 @@ use chrono::{Datelike, Months, NaiveDate};
 use csv::Writer;
 use deadpool_postgres::Client;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::error::Error;
 use std::fs::File;
 
 use crate::backtest::model::{GridQuery, StrategyGridRow};
 use crate::backtest::sql::build_flat_sql;
-use crate::db;
 
-// --- SOLUCIÓN AL ERROR DE TIPOS ---
-// Creamos un alias para la tupla compleja que usamos como clave.
-// Esto ayuda al compilador a inferir los tipos correctamente.
 type StrategyKey = (
     String,
     String,
@@ -244,7 +241,133 @@ pub fn export_summary_to_csv(
     let file = File::create(filename)?;
     let mut wtr = Writer::from_writer(file);
 
-    // ... (El resto de esta función puede permanecer igual, pero es buena idea que devuelva un Result)
+    // --- START OF MISSING LOGIC ---
+
+    // Define the base headers
+    let mut headers = vec![
+        "strategy",
+        "tf",
+        "roi",
+        "sl",
+        "max_open_trades",
+        "ts",
+        "tsp",
+        "tspo",
+        "toor",
+        "entry_price",
+        "exit_price",
+        "depth_mkt",
+        "t_profit",
+        "t_trades",
+        "t_wins",
+        "win_rate",
+        "win_time",
+        "drawdown_perc",
+        "rejected_signals",
+        "neg_months",
+        "avg_monthly_profit",
+        "std_monthly_profit",
+        "max_profit_month",
+        "min_profit_month",
+        "avg_trade_profit",
+        "losses",
+        "loss_rate",
+        "expectancy",
+        "profit_factor",
+    ];
+
+    // Collect all unique month keys from the data
+    let mut all_months: Vec<String> = data
+        .iter()
+        .flat_map(|row| row.monthly.keys().cloned())
+        .collect::<HashSet<_>>() // Use HashSet to get unique months
+        .into_iter()
+        .collect();
+    all_months.sort(); // Sort the months chronologically
+
+    // Add the sorted month headers to the main headers
+    headers.extend(all_months.iter().map(|s| s.as_str()));
+
+    // Write the complete header record to the file
+    wtr.write_record(&headers)?;
+
+    // Iterate through each data row to write it to the CSV
+    for row in data {
+        // Format all fields as strings for writing
+        let max_open_trades = row.max_open_trades.to_string();
+        let trailing_stop = row.trailing_stop.to_string();
+        let tsp = row.trailing_stop_positive.unwrap_or(0.0).to_string();
+        let tspo = row.trailing_stop_positive_offset.unwrap_or(0.0).to_string();
+        let toor = row.trailing_only_offset_is_reached.to_string();
+        let depth_mkt = row.check_depth_of_market_enable.to_string();
+        let t_profit = row.total_profit.to_string();
+        let t_trades = row.total_trades.to_string();
+        let t_wins = row.wins.to_string();
+        let win_rate = format!("{:.2}", row.win_rate);
+        let win_time = format!("{:.2}", row.win_time);
+        let drawdown = format!("{:.2}", row.drawdown_perc);
+        let rejected = format!("{:.0}", row.rejected_signals);
+        let neg_months = row.neg_months.to_string();
+        let avg_monthly = format!("{:.2}", row.avg_monthly_profit);
+        let std_monthly = format!("{:.2}", row.std_monthly_profit);
+        let max_month = format!("{:.2}", row.max_profit_month);
+        let min_month = format!("{:.2}", row.min_profit_month);
+        let avg_trade = format!("{:.2}", row.avg_trade_profit);
+        let losses = row.losses.to_string();
+        let loss_rate = format!("{:.2}", row.loss_rate);
+        let expectancy = format!("{:.2}", row.expectancy);
+        let profit_factor = format!("{:.2}", row.profit_factor);
+
+        // Start building the record with the base fields
+        let mut record = vec![
+            row.strategy.as_str(),
+            row.timeframe.as_str(),
+            row.minimal_roi.as_str(),
+            row.stoploss.as_str(),
+            &max_open_trades,
+            &trailing_stop,
+            &tsp,
+            &tspo,
+            &toor,
+            row.entry_price.as_str(),
+            row.exit_price.as_str(),
+            &depth_mkt,
+            &t_profit,
+            &t_trades,
+            &t_wins,
+            &win_rate,
+            &win_time,
+            &drawdown,
+            &rejected,
+            &neg_months,
+            &avg_monthly,
+            &std_monthly,
+            &max_month,
+            &min_month,
+            &avg_trade,
+            &losses,
+            &loss_rate,
+            &expectancy,
+            &profit_factor,
+        ];
+
+        // Get the monthly profit values in the correct order
+        let formatted_months: Vec<String> = all_months
+            .iter()
+            .map(|month| format!("{:.2}", row.monthly.get(month).cloned().unwrap_or(0.0)))
+            .collect();
+
+        // Add the monthly values to the record
+        let monthly_strs: Vec<&str> = formatted_months.iter().map(AsRef::as_ref).collect();
+        record.extend(monthly_strs);
+
+        // Write the full record for the current strategy row
+        wtr.write_record(&record)?;
+    }
+
+    // Ensure all data is written to the file
+    wtr.flush()?;
+    println!("✅ Reporte exportado a '{}'", filename);
 
     Ok(())
 }
