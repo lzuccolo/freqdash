@@ -69,7 +69,7 @@ fn build_query_section() -> PreferencesGroup {
     let exchange_row = ComboRow::new();
     exchange_row.set_title("Exchange");
     exchange_row.set_subtitle("Seleccione el exchange");
-    let exchange_model = gtk4::StringList::new(&["BINANCE", "KRAKEN"]);
+    let exchange_model = gtk4::StringList::new(&["BINANCE"]);
     exchange_row.set_model(Some(&exchange_model));
     exchange_row.set_selected(0);
     exchange_row.set_widget_name("exchange");
@@ -85,20 +85,7 @@ fn build_query_section() -> PreferencesGroup {
     currency_row.set_widget_name("currency");
     group.add(&currency_row);
 
-    /*  // Pairlist ActionRow con Entry
-    let pairlist_row = ActionRow::new();
-    pairlist_row.set_title("Pares");
-    pairlist_row.set_subtitle("Lista de pares separados por comas");
-    let pairlist_entry = Entry::builder()
-        .placeholder_text("BTC,ETH,BNB")
-        .text("BTC")
-        .valign(Align::Center)
-        .build();
-    pairlist_entry.set_widget_name("pairlist");
-    pairlist_row.add_suffix(&pairlist_entry);
-    pairlist_row.set_activatable_widget(Some(&pairlist_entry));
-    group.add(&pairlist_row); */
-
+    // Pairlist ComboRow
     let pairlist_row = ComboRow::builder()
         .title("Pares")
         .subtitle("Lista de pares disponibles")
