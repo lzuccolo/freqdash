@@ -2,6 +2,7 @@
 use adw::HeaderBar;
 use chrono::Local;
 use gtk4::prelude::*;
+use gtk4::{Button, TreeView};
 use libadwaita as adw;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -11,22 +12,21 @@ use crate::gui_adw::state::AppState;
 use crate::gui_adw::utils;
 
 /// Conecta los eventos de exportación
-pub fn connect(header_bar: &HeaderBar, right_panel: &gtk4::Box, table_view: &gtk4::TreeView, state: &Rc<RefCell<AppState>>) {
+pub fn connect(
+    header_bar: &HeaderBar,
+    right_panel: &gtk4::Box,
+    table_view: &gtk4::TreeView,
+    state: &Rc<RefCell<AppState>>,
+) {
     let export_selection: gtk4::Button = utils::find_widget(header_bar, "export_selection");
     let export_all: gtk4::Button = utils::find_widget(header_bar, "export_all");
     let clear: gtk4::Button = utils::find_widget(header_bar, "clear");
 
-    // Exportar selección
     connect_export_selection(&export_selection, table_view, state);
-
-    // Exportar todo
     connect_export_all(&export_all, state);
-
-    // Limpiar
-    connect_clear(&clear, right_panel, state);
+    connect_clear(&clear, header_bar, state);
 }
 
-/// Conecta el evento de exportar selección
 fn connect_export_selection(
     button: &gtk4::Button,
     table_view: &gtk4::TreeView,
@@ -106,43 +106,33 @@ fn connect_export_all(button: &gtk4::Button, state: &Rc<RefCell<AppState>>) {
     });
 }
 
-/// Conecta el evento de limpiar con confirmación
-fn connect_clear(button: &gtk4::Button, right_panel: &gtk4::Box, state: &Rc<RefCell<AppState>>) {
+fn connect_clear(button: &gtk4::Button, header_bar: &HeaderBar, state: &Rc<RefCell<AppState>>) {
     let state_clone = state.clone();
-    let right_panel_clone = right_panel.clone();
+    let header_bar_clone = header_bar.clone();
 
-    button.connect_clicked(move |btn| {
-        // Añadir animación de limpieza
-        btn.add_css_class("destructive-action");
-
+    button.connect_clicked(move |_| {
         let mut state = state_clone.borrow_mut();
+        state.results.clear();
+        state.store.clear();
 
-        // Animación de fade out antes de limpiar
-        if state.has_results() {
-            state.clear();
+        // Update the results count in the header bar
+        let results_label: gtk4::Label = utils::find_widget(&header_bar_clone, "results_count");
+        results_label.set_markup("<b>Resultados:</b> 0");
 
-            // Actualizar UI con transición
-            update_results_count(&right_panel_clone, 0);
-            enable_export_buttons(&right_panel_clone, false);
-            update_status(&right_panel_clone, "✨ Tabla limpiada");
-        }
-
-        // Remover estilo después de animación
-        let btn_clone = btn.clone();
-        gtk4::glib::timeout_add_local_once(std::time::Duration::from_millis(300), move || {
-            btn_clone.remove_css_class("destructive-action");
-        });
+        // Disable export buttons
+        let export_selection: Button = utils::find_widget(&header_bar_clone, "export_selection");
+        let export_all: Button = utils::find_widget(&header_bar_clone, "export_all");
+        export_selection.set_sensitive(false);
+        export_all.set_sensitive(false);
     });
 }
 
-/// Muestra una notificación de exportación (simulada con print)
 fn show_export_notification(filename: &str, count: usize) {
     // En una aplicación real, aquí se mostraría un Toast de Adwaita
     println!("📁 Archivo exportado: {}", filename);
     println!("   {} estrategias guardadas exitosamente", count);
 }
 
-/// Actualiza el contador de resultados con estilo
 fn update_results_count(toolbar: &gtk4::Box, count: usize) {
     let label: gtk4::Label = utils::find_widget(toolbar, "results_count");
     if count > 0 {

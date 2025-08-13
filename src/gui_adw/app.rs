@@ -65,10 +65,6 @@ fn build_ui(
     left_panel.set_width_request(360);
     let (right_panel, tree_view, filter_model) = ui::right_panel::create();
 
-    //let main_content = gtk4::Box::new(gtk4::Orientation::Horizontal, 0);
-    //main_content.append(&left_panel);
-    //main_content.append(&right_panel);
-
     let split_view = NavigationSplitView::new();
     let content_page = NavigationPage::new(&right_panel, "Resultados");
     split_view.set_content(Some(&content_page));
@@ -154,6 +150,7 @@ fn build_ui(
                                     let total_rows = rows.len();
                                     query::update_results_count(&header_bar, total_rows);
                                     state.borrow_mut().results = rows.clone();
+                                    
                                     let batch_state = Rc::new(RefCell::new((rows, 0)));
                                     glib::idle_add_local(move || {
                                         let mut state_guard = batch_state.borrow_mut();
