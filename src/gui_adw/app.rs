@@ -1,4 +1,5 @@
 // src/gui_adw/app.rs
+use adw::prelude::*;
 use adw::{NavigationPage, NavigationSplitView};
 use gtk4::prelude::*;
 use gtk4::Button;
@@ -25,11 +26,13 @@ pub fn get_runtime() -> &'static Runtime {
 
 #[derive(Debug, Clone)]
 pub enum DatabaseCommand {
+    FetchPairlist,
     RunBacktest(GridQuery),
 }
 
 #[derive(Debug)]
 pub enum DatabaseResult {
+    Pairlist(Result<Vec<String>, String>),
     Backtest(Result<Vec<StrategyGridRow>, String>),
 }
 
@@ -71,7 +74,7 @@ fn build_ui(
 
     let sidebar_page = NavigationPage::new(&left_panel, "Parámetros");
     split_view.set_sidebar(Some(&sidebar_page));
-    
+
     split_view.set_min_sidebar_width(360.0);
     split_view.set_max_sidebar_width(400.0);
     split_view.set_collapsed(false);
@@ -108,14 +111,15 @@ fn build_ui(
 
     window.connect_show(move |_| {
         // Clone variables for connect_all
-        let command_tx_for_connect = command_tx_clone.clone();
+        //let command_tx_for_connect = command_tx_clone.clone();
+        command_tx_clone.send(DatabaseCommand::FetchPairlist).expect("Failed to send FetchPairlist command");
         events::connect_all(
             &left_panel_clone,
             &right_panel_clone,
             &header_bar_clone,
             &tree_view_clone,
             &app_state_clone,
-            command_tx_for_connect,
+            command_tx_clone.clone(),
         );
 
         // Clone variables for the timer
@@ -134,6 +138,32 @@ fn build_ui(
                     let header_bar = header_bar_for_timer.clone();
 
                     match msg {
+                        DatabaseResult::Pairlist(result) => {
+                            match result {
+                                Ok(pairs) => {
+                                    println!("UI: Received pairlist with {} pairs.", pairs.len());
+                                    // Find the ComboRow and populate its model
+                                    let pairlist_combo: adw::ComboRow =
+                                        utils::find_widget(&left_panel, "pairlist_combo");
+                                    let model = gtk4::StringList::new(
+                                        &pairs.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
+                                    );
+                                    pairlist_combo.set_model(Some(&model));
+                                    if !pairs.is_empty() {
+                                        pairlist_combo.set_selected(0);
+                                    }
+                                }
+                                Err(e) => {
+                                    eprintln!("UI: Failed to receive pairlist: {}", e);
+                                    // Optionally, show this error in the status bar
+                                    query::update_status(
+                                        &right_panel,
+                                        &format!("❌ Error al cargar pares: {}", e),
+                                    );
+                                }
+                            }
+                        }
+
                         DatabaseResult::Backtest(result) => {
                             let button: gtk4::Button = utils::find_widget(&left_panel, "execute");
                             let progress_bar: gtk4::ProgressBar =
@@ -150,7 +180,7 @@ fn build_ui(
                                     let total_rows = rows.len();
                                     query::update_results_count(&header_bar, total_rows);
                                     state.borrow_mut().results = rows.clone();
-                                    
+
                                     let batch_state = Rc::new(RefCell::new((rows, 0)));
                                     glib::idle_add_local(move || {
                                         let mut state_guard = batch_state.borrow_mut();
@@ -215,11 +245,47 @@ fn database_worker(
     while let Ok(command) = command_rx.recv() {
         let result_tx = result_tx.clone();
         rt.spawn(async move {
-            let client = db::get_db_pool()
-                .get()
-                .await
-                .expect("Failed to get client from pool");
+            let client = match db::get_db_pool().get().await {
+                Ok(client) => client,
+                Err(e) => {
+                    let err_msg = format!("Error al obtener conexión del pool: {}", e);
+                    result_tx
+                        .send(DatabaseResult::Backtest(Err(err_msg)))
+                        .unwrap();
+                    return;
+                }
+            };
+
             match command {
+                DatabaseCommand::FetchPairlist => {
+                    println!("Worker: Obteniendo lista de pares...");
+                    let result = async {
+                        let rows = client
+                            .query(
+                                "SELECT DISTINCT pairlist FROM backtest ORDER BY pairlist ASC",
+                                &[],
+                            )
+                            .await?;
+                        let pairs: Vec<String> = rows.iter().map(|row| row.get(0)).collect();
+                        Ok(pairs)
+                    }
+                    .await;
+
+                    
+
+                    let _ = result_tx.send(DatabaseResult::Pairlist(
+                        result.map_err(|e: tokio_postgres::Error| e.to_string()),
+                    ));
+
+                    // let pairs = vec![
+                    //     "BTC".to_string(),
+                    //     "ETH".to_string(),
+                    //     "ADA".to_string(),
+                    // ];
+                    // let _ = result_tx.send(DatabaseResult::Pairlist(Ok(pairs)));
+
+                }
+
                 DatabaseCommand::RunBacktest(query) => {
                     let result = get_grid_summary(&client, &query)
                         .await

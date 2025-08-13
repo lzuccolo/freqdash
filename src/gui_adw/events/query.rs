@@ -81,7 +81,8 @@ pub fn get_query_params(panel: &GtkBox) -> GridQuery {
     let currency: ComboRow = utils::find_widget(panel, "currency");
     let exchange_text = utils::get_combo_row_text(&exchange);
     let currency_text = utils::get_combo_row_text(&currency);
-    let pairlist: gtk4::Entry = utils::find_widget(panel, "pairlist");
+    let pairlist_combo: ComboRow = utils::find_widget(panel, "pairlist_combo");    
+    let pairlist_text = utils::get_combo_row_text(&pairlist_combo);  
     let start_date: gtk4::Entry = utils::find_widget(panel, "start_date");
     let months: gtk4::SpinButton = utils::find_widget(panel, "months");
 
@@ -96,7 +97,7 @@ pub fn get_query_params(panel: &GtkBox) -> GridQuery {
         } else {
             currency_text
         },
-        pairlist: pairlist.text().to_string(),
+        pairlist: pairlist_text,
         start_date: start_date.text().to_string(),
         months: months.value() as usize,
     }
