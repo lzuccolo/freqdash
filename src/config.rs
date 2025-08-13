@@ -1,25 +1,16 @@
 // src/config.rs
 
-use dotenvy::dotenv;
+use once_cell::sync::OnceCell;
 use std::env;
-use crate::db::AsyncDatabase;
 
+static DATABASE_URL: OnceCell<String> = OnceCell::new();
 
-pub async fn init() {
-    dotenv().ok();
-    init_database().await;
+pub fn init_config() {
+    dotenvy::dotenv().ok();
+    let url = env::var("DATABASE_URL").expect("DATABASE_URL debe estar definida en el archivo .env");
+    DATABASE_URL.set(url).expect("La configuración ya estaba inicializada");
 }
 
-pub fn get_database_url() -> String {
-    env::var("DATABASE_URL").expect("DATABASE_URL no está definida en .env")
-}
-
-pub async fn init_database() {
-    let db_url = get_database_url();
-    AsyncDatabase::init(&db_url).await.unwrap();
-    println!("✅ AsyncDatabase inicializada correctamente.");
-}
-
-pub fn get_config_key(key: &str) -> String {
-    env::var(key).unwrap_or_else(|_| panic!("{key} no está definida en .env"))
+pub fn get_database_url() -> &'static str {
+    DATABASE_URL.get().expect("La configuración no está inicializada")
 }

@@ -2,59 +2,47 @@
 
 use gtk4::prelude::*;
 use gtk4::{Box, Button, Label, Orientation};
-use libadwaita::ButtonContent;
+use libadwaita::HeaderBar;
 
-/// Crea la barra de herramientas con controles de resultados estilo Adwaita
-pub fn create() -> Box {
-    let toolbar = Box::new(Orientation::Horizontal, 12);
-    toolbar.add_css_class("toolbar");
-    toolbar.set_margin_top(8);
-    toolbar.set_margin_bottom(8);
-    toolbar.set_margin_start(12);
-    toolbar.set_margin_end(12);
+pub fn create() -> HeaderBar {
+    let header_bar = HeaderBar::new();
+    header_bar.add_css_class("flat");
 
-    // Label de contador con estilo
-    let results_label = Label::new(Some("Resultados: 0"));
-    results_label.set_widget_name("results_count");
-    results_label.add_css_class("title-4");
-    toolbar.append(&results_label);
+    let menu_button = Button::builder()
+        .name("flap_toggle") // Give it a name to connect the event
+        .icon_name("sidebar-show-symbolic")
+        .build();
+    header_bar.pack_start(&menu_button);
 
-    // Spacer
-    let spacer = Box::new(Orientation::Horizontal, 0);
-    spacer.set_hexpand(true);
-    toolbar.append(&spacer);
+    let results_label = Label::builder()
+        .name("results_count")
+        .halign(gtk4::Align::Start)
+        .build();
+    results_label.set_markup("<b>Resultados:</b> 0");
+    header_bar.pack_start(&results_label);
 
-    // Botón exportar selección con icono
-    let export_button = Button::new();
-    let export_content = ButtonContent::new();
-    export_content.set_label("Exportar Selección");
-    export_content.set_icon_name("document-save-symbolic");
-    export_button.set_child(Some(&export_content));
-    export_button.set_widget_name("export_selection");
-    export_button.set_sensitive(false);
-    export_button.add_css_class("flat");
-    toolbar.append(&export_button);
+    let export_selection = Button::builder()
+        .name("export_selection")
+        .icon_name("document-save-symbolic")
+        .tooltip_text("Exportar Selección")
+        .sensitive(false)
+        .build();
+    header_bar.pack_end(&export_selection);
 
-    // Botón exportar todo con icono
-    let export_all_button = Button::new();
-    let export_all_content = ButtonContent::new();
-    export_all_content.set_label("Exportar Todo");
-    export_all_content.set_icon_name("document-save-as-symbolic");
-    export_all_button.set_child(Some(&export_all_content));
-    export_all_button.set_widget_name("export_all");
-    export_all_button.set_sensitive(false);
-    export_all_button.add_css_class("flat");
-    toolbar.append(&export_all_button);
+    let export_all = Button::builder()
+        .name("export_all")
+        .icon_name("document-save-as-symbolic")
+        .tooltip_text("Exportar Todo")
+        .sensitive(false)
+        .build();
+    header_bar.pack_end(&export_all);
 
-    // Botón limpiar con icono y estilo destructivo
-    let clear_button = Button::new();
-    let clear_content = ButtonContent::new();
-    clear_content.set_label("Limpiar");
-    clear_content.set_icon_name("user-trash-symbolic");
-    clear_button.set_child(Some(&clear_content));
-    clear_button.set_widget_name("clear");
-    clear_button.add_css_class("flat");
-    toolbar.append(&clear_button);
+    let clear_button = Button::builder()
+        .name("clear")
+        .icon_name("edit-clear-all-symbolic")
+        .tooltip_text("Limpiar")
+        .build();
+    header_bar.pack_end(&clear_button);
 
-    toolbar
+    header_bar
 }

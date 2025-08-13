@@ -1,32 +1,23 @@
+// src/db.rs
+
 use once_cell::sync::OnceCell;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use tokio_postgres::{Client, NoTls};
+use deadpool_postgres::{Pool, Config, Runtime};
+use tokio_postgres::NoTls;
+use crate::config;
 
-pub struct AsyncDatabase;
+static DB_POOL: OnceCell<Pool> = OnceCell::new();
 
-// Global singleton con Mutex asincrónico y Arc para clonarlo
-static INSTANCE: OnceCell<Arc<Mutex<Client>>> = OnceCell::new();
+pub fn init_db_pool() {
+    let mut cfg = Config::new();
+    cfg.url = Some(config::get_database_url().to_string());
+    
+    let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls)
+        .expect("No se pudo crear el pool de la base de datos");
+    
+    DB_POOL.set(pool).expect("El pool de la base de datos ya estaba inicializado");
+    println!("✅ Pool de conexiones a la DB inicializado correctamente.");
+}
 
-impl AsyncDatabase {
-    pub async fn init(database_url: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let (client, connection) = tokio_postgres::connect(database_url, NoTls).await?;
-
-        // Lanzamos la conexión en segundo plano
-        tokio::spawn(async move {
-            if let Err(e) = connection.await {
-                eprintln!("Error conexión DB: {}", e);
-            }
-        });
-
-        // Guardamos el cliente envuelto en Arc<Mutex>
-        INSTANCE.set(Arc::new(Mutex::new(client))).map_err(|_| "Ya inicializado")?;
-        println!("✅ AsyncDatabase inicializada correctamente.");
-        Ok(())
-    }
-
-    // Devolvemos una copia del Arc para que pueda ser utilizado de forma segura
-    pub async fn get_client() -> Arc<Mutex<Client>> {
-        INSTANCE.get().expect("Base de datos no inicializada").clone()
-    }
+pub fn get_db_pool() -> &'static Pool {
+    DB_POOL.get().expect("El pool de la base de datos no está inicializado")
 }

@@ -34,3 +34,12 @@ pub struct StrategyGridRow {
     pub profit_factor: f64,
     pub monthly: HashMap<String, f64>,
 }
+
+#[derive(Debug, serde::Deserialize, Clone)]
+pub struct GridQuery {
+    pub exchange: String,
+    pub currency: String,
+    pub pairlist: String,
+    pub start_date: String,
+    pub months: usize,
+}

@@ -1,4 +1,4 @@
-use crate::backtest::logic::GridQuery;
+use crate::backtest::model::GridQuery;
 
 pub fn build_flat_sql(params: &GridQuery, timeranges: &[String]) -> String {
     let timerange_list = timeranges

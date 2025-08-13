@@ -1,148 +1,68 @@
 // src/gui_adw/events/query.rs
 
 use gtk4::prelude::*;
-use gtk4::{glib, ListStore, TreeModelFilter, TreeView};
+use gtk4::{glib, Box as GtkBox, Button, Label, ListStore, ProgressBar, Spinner, TreeModelFilter, TreeView};
+use libadwaita::HeaderBar;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::thread;
 use std::sync::mpsc;
-
+use std::thread;
 use libadwaita::ComboRow;
+use tokio::runtime::Runtime;
 
 use crate::gui_adw::state::AppState;
 use crate::gui_adw::utils;
-use crate::backtest::logic::{get_grid_summary, GridQuery};
-use crate::backtest::model::StrategyGridRow;
+use crate::backtest::logic::get_grid_summary;
+use crate::backtest::model::{GridQuery, StrategyGridRow};
 use glib::value::ToValue;
-use tokio::runtime::Runtime;
+use crate::gui_adw::app::{DatabaseCommand, get_runtime};
 
-const BATCH_SIZE: usize = 200;
+pub const BATCH_SIZE: usize = 200;
 
 pub fn connect(
-    left_panel: &gtk4::Box,
-    right_panel: &gtk4::Box,
+    left_panel: &GtkBox,
+    right_panel: &GtkBox,
+    header_bar: &HeaderBar,
     tree_view: &TreeView,
-    state: &Rc<RefCell<AppState>>
+    state: &Rc<RefCell<AppState>>,
+    command_tx: mpsc::Sender<DatabaseCommand>,
 ) {
-    let execute_button: gtk4::Button = utils::find_widget(left_panel, "execute");
-    let progress_bar: gtk4::ProgressBar = utils::find_widget(left_panel, "progress");
-    let status_label: gtk4::Label = utils::find_widget(right_panel, "status");
-    let spinner: gtk4::Spinner = utils::find_widget(right_panel, "spinner");
-
+    let execute_button: Button = utils::find_widget(left_panel, "execute");
     let tree_view_clone = tree_view.clone();
     let state_clone = state.clone();
     let left_panel_clone = left_panel.clone();
-    let right_panel_clone = right_panel.clone();
 
-    execute_button.connect_clicked(move |button| {
+    execute_button.connect_clicked(move |_button| {
         if state_clone.borrow().is_loading { return; }
         
         let mut state = state_clone.borrow_mut();
         state.is_loading = true;
 
-        let column_types: Vec<glib::Type> = (0..state.store.n_columns())
-            .map(|i| state.store.column_type(i))
-            .collect();
-
-        let new_store = gtk4::ListStore::new(&column_types);
+        let column_types: Vec<glib::Type> = (0..state.store.n_columns()).map(|i| state.store.column_type(i)).collect();
+        let new_store = ListStore::new(&column_types);
         let new_filter_model = TreeModelFilter::new(&new_store, None);
         new_filter_model.set_visible_column(30);
         tree_view_clone.set_model(Some(&new_filter_model));
-
         state.store = new_store;
         state.filter_model = new_filter_model;
         state.results.clear();
         drop(state);
 
-        button.set_sensitive(false);
-        progress_bar.set_visible(true);
-        status_label.set_text("Ejecutando consulta...");
-        spinner.set_visible(true);
-        spinner.start();
+        let execute_button: Button = utils::find_widget(&left_panel_clone, "execute");
+        let progress_bar: ProgressBar = utils::find_widget(&left_panel_clone, "progress");
         
-        let (tx, rx) = mpsc::channel::<Result<Vec<StrategyGridRow>, String>>();
+        execute_button.set_sensitive(false);
+        progress_bar.set_visible(true);
+        
         let query = get_query_params(&left_panel_clone);
-
-        thread::spawn(move || {
-            let rt = Runtime::new().expect("No se pudo crear el runtime de Tokio");
-            let result = rt.block_on(get_grid_summary(&query)).map_err(|e| e.to_string());
-            let _ = tx.send(result);
-        });
-
-        let state_clone2 = state_clone.clone();
-        let button_clone = button.clone();
-        let progress_clone = progress_bar.clone();
-        let right_panel_clone2 = right_panel_clone.clone();
-        let spinner_clone = spinner.clone();
-
-        glib::timeout_add_local(std::time::Duration::from_millis(100), move || {
-            match rx.try_recv() {
-                // SUCCESS! We got a message.
-                Ok(result) => {
-                    // This block now runs ONLY ONCE.
-                    progress_clone.set_fraction(1.0);
-
-                    match result {
-                        Ok(rows) => {
-                            let total_rows = rows.len();
-                            update_results_count(&right_panel_clone2, total_rows);
-                            state_clone2.borrow_mut().results = rows.clone();
-                            
-                            // We create the batch processor here, now that we have the data.
-                            let batch_state = Rc::new(RefCell::new((rows, 0)));
-                            glib::idle_add_local(move || {
-                                let mut state_guard = batch_state.borrow_mut();
-                                let (all_rows, current_index) = &mut *state_guard;
-                                let end = (*current_index + BATCH_SIZE).min(all_rows.len());
-                                
-                                populate_store_batch(&state_clone2.borrow().store, &all_rows[*current_index..end]);
-                                *current_index = end;
-
-                                if *current_index < all_rows.len() {
-                                    glib::ControlFlow::Continue
-                                } else {
-                                    update_status(&right_panel_clone2, &format!("✅ {} resultados encontrados", total_rows));
-                                    enable_export_buttons(&right_panel_clone2, !all_rows.is_empty());
-                                    state_clone2.borrow_mut().is_loading = false;
-                                    button_clone.set_sensitive(true);
-                                    progress_clone.set_visible(false);
-                                    spinner_clone.stop();
-                                    spinner_clone.set_visible(false);
-                                    glib::ControlFlow::Break
-                                }
-                            });
-                        },
-                        Err(e_string) => {
-                             update_status(&right_panel_clone2, &format!("❌ Error: {}", e_string));
-                             state_clone2.borrow_mut().is_loading = false;
-                             button_clone.set_sensitive(true);
-                             progress_clone.set_visible(false);
-                             spinner_clone.stop();
-                             spinner_clone.set_visible(false);
-                        }
-                    }
-                    // Stop the timeout timer, its job is done.
-                    glib::ControlFlow::Break
-                },
-                // The channel is empty, the background thread is still working.
-                Err(mpsc::TryRecvError::Empty) => {
-                    progress_clone.pulse();
-                    glib::ControlFlow::Continue // Keep polling.
-                },
-                // The background thread panicked.
-                Err(mpsc::TryRecvError::Disconnected) => {
-                    update_status(&right_panel_clone2, "❌ Error: El hilo de trabajo falló.");
-                    glib::ControlFlow::Break // Stop polling.
-                }
-            }
-        });
+        command_tx.send(DatabaseCommand::RunBacktest(query)).expect("Failed to send command");
     });
 }
 
-
 // --- HELPER FUNCTIONS ---
+// Make these public so app.rs can use them.
 
-fn get_query_params(panel: &gtk4::Box) -> GridQuery {
+pub fn get_query_params(panel: &GtkBox) -> GridQuery {
     let exchange: ComboRow = utils::find_widget(panel, "exchange");
     let currency: ComboRow = utils::find_widget(panel, "currency");
     let exchange_text = utils::get_combo_row_text(&exchange);
@@ -160,7 +80,7 @@ fn get_query_params(panel: &gtk4::Box) -> GridQuery {
     }
 }
 
-fn populate_store_batch(store: &ListStore, batch: &[StrategyGridRow]) {
+pub fn populate_store_batch(store: &ListStore, batch: &[StrategyGridRow]) {
     for r in batch {
         store.insert_with_values(
             None,
@@ -185,19 +105,21 @@ fn populate_store_batch(store: &ListStore, batch: &[StrategyGridRow]) {
     }
 }
 
-fn update_results_count(toolbar: &gtk4::Box, count: usize) {
-    let label: gtk4::Label = utils::find_widget(toolbar, "results_count");
+pub fn update_results_count(toolbar: &HeaderBar, count: usize) {
+    let label: Label = utils::find_widget(toolbar, "results_count");
     label.set_markup(&format!("<b>Resultados:</b> {}", count));
 }
 
-fn update_status(status_bar: &gtk4::Box, message: &str) {
-    let label: gtk4::Label = utils::find_widget(status_bar, "status");
+pub fn update_status(status_bar: &GtkBox, message: &str) {
+    let label: Label = utils::find_widget(status_bar, "status");
     label.set_text(message);
 }
 
-fn enable_export_buttons(toolbar: &gtk4::Box, enable: bool) {
-    let export_selection: gtk4::Button = utils::find_widget(toolbar, "export_selection");
-    let export_all: gtk4::Button = utils::find_widget(toolbar, "export_all");
+pub fn enable_export_buttons(toolbar: &HeaderBar, enable: bool) {
+    let export_selection: Button = utils::find_widget(toolbar, "export_selection");
+    let export_all: Button = utils::find_widget(toolbar, "export_all");
+    let clear: Button = utils::find_widget(toolbar, "clear");
     export_selection.set_sensitive(enable);
     export_all.set_sensitive(enable);
+    clear.set_sensitive(enable);
 }
