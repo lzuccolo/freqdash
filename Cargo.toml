@@ -13,10 +13,6 @@ path = "src/bin/cli.rs"
 name = "gui"
 path = "src/bin/gui.rs"
 
-[[bin]]
-name = "gui_adw"
-path = "src/bin/gui_adw.rs"
-
 [dependencies]
 # Comunes
 deadpool-postgres = { version = "0.12", features = ["rt_tokio_1"] }
@@ -28,6 +24,7 @@ dotenvy = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 csv = "1.3.1"
+rand = "0.8"
 
 # Opcionales
 clap = { version = "4.5", features = ["derive"], optional = true }
@@ -39,5 +36,4 @@ libadwaita = { version = "0.8", features = ["v1_7"], optional = true }
 [features]
 default = []
 cli = ["dep:clap"]
-gtk = ["dep:gtk4", "dep:glib"]
-adwaita = ["dep:libadwaita", "dep:gtk4", "dep:glib"]
+gui = ["dep:libadwaita", "dep:gtk4", "dep:glib"]

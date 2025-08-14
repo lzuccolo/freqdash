@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="AppWindow" parent="AdwApplicationWindow">
+    <property name="default-width">1200</property>
+    <property name="default-height">800</property>
+    <property name="content">
+      <object class="AdwToolbarView">
+        <child type="top">
+          <object class="AppToolbar" id="header_bar" />
+        </child>
+        <child>
+          <object class="AdwTabView" id="tab_view" />
+        </child>
+      </object>
+    </property>
+  </template>
+</interface>

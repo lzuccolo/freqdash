@@ -52,3 +52,33 @@ fn build_ui(app: &Application) {
     
     // ... (resto del código igual)
 }
+
+
+src/
+├── bin/
+│   └── gui_adw.rs
+├── lib.rs
+├── app.rs
+├── config.rs
+├── db.rs
+├── backtest.rs          # Declara los submódulos de backtest
+├── backtest/
+│   ├── logic.rs
+│   └── model.rs
+│       └── sql.rs
+├── gui.rs               # Declara los submódulos de la gui
+└── gui/
+    ├── window.rs
+    ├── window.ui
+    ├── components.rs      # Declara los componentes
+    ├── components/
+    │   ├── backtest_page.rs
+    │   ├── backtest_page.ui
+    │   ├── left_panel.rs
+    │   ├── left_panel.ui
+    │   ├── right_panel.rs
+    │   ├── right_panel.ui
+    │   └── toolbar.rs
+    │       └── toolbar.ui
+    ├── state.rs
+    └── utils.rs
