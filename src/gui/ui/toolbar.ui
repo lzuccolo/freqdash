@@ -8,5 +8,10 @@
         <property name="tooltip-text">Nuevo Análisis</property>
       </object>
     </child>
+    <child type="title">
+        <object class="AdwWindowTitle">
+            <property name="title">FreqDash</property>
+        </object>
+    </child>
   </template>
 </interface>

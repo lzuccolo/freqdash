@@ -16,13 +16,8 @@ impl ObjectSubclass for AppToolbar {
     type Type = super::AppToolbar;
     type ParentType = adw::HeaderBar;
 
-    fn class_init(klass: &mut Self::Class) {
-        klass.bind_template();
-    }
-
-    fn instance_init(obj: &InitializingObject<Self>) {
-        obj.init_template();
-    }
+    fn class_init(klass: &mut Self::Class) { klass.bind_template(); }
+    fn instance_init(obj: &InitializingObject<Self>) { obj.init_template(); }
 }
 
 impl ObjectImpl for AppToolbar {}
@@ -30,8 +25,9 @@ impl WidgetImpl for AppToolbar {}
 impl HeaderBarImpl for AppToolbar {}
 
 glib::wrapper! {
-    pub struct AppToolbar(ObjectSubclass<super::AppToolbar>)
-        @extends adw::HeaderBar, gtk4::Widget;
+    pub struct AppToolbar(ObjectSubclass<imp::AppToolbar>)
+        @extends adw::HeaderBar, gtk4::Widget,
+        @implements gtk4::Accessible, gtk4::Buildable, gtk4::ConstraintTarget;
 }
 
 impl AppToolbar {
