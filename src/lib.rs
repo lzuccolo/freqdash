@@ -3,5 +3,8 @@ pub mod config;
 pub mod db;
 pub mod utils;
 
-#[cfg(feature = "gui")]
+#[cfg(feature = "gtk")]
 pub mod gui;
+
+#[cfg(feature = "adwaita")]
+pub mod gui_adw;

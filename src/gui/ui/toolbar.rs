@@ -1,37 +1,40 @@
-use gtk4::glib::subclass::InitializingObject;
-use gtk4::subclass::prelude::*;
-use gtk4::{glib, Button, CompositeTemplate};
-use libadwaita as adw;
+use gtk4::prelude::*;
+use gtk4::{Box, Button, Label, Orientation};
 
-#[derive(CompositeTemplate, Default)]
-#[template(file = "toolbar.ui")]
-pub struct AppToolbar {
-    #[template_child]
-    pub new_tab_button: TemplateChild<Button>,
-}
+/// Crea la barra de herramientas con controles de resultados
+pub fn create() -> Box {
+    let toolbar = Box::new(Orientation::Horizontal, 8);
+    toolbar.set_margin_top(8);
+    toolbar.set_margin_bottom(8);
+    toolbar.set_margin_start(8);
+    toolbar.set_margin_end(8);
 
-#[glib::object_subclass]
-impl ObjectSubclass for AppToolbar {
-    const NAME: &'static str = "AppToolbar";
-    type Type = super::AppToolbar;
-    type ParentType = adw::HeaderBar;
+    // Label de contador de resultados
+    let results_label = Label::new(Some("Resultados: 0"));
+    results_label.set_widget_name("results_count");
+    toolbar.append(&results_label);
 
-    fn class_init(klass: &mut Self::Class) { klass.bind_template(); }
-    fn instance_init(obj: &InitializingObject<Self>) { obj.init_template(); }
-}
+    // Spacer para empujar botones a la derecha
+    let spacer = Box::new(Orientation::Horizontal, 0);
+    spacer.set_hexpand(true);
+    toolbar.append(&spacer);
 
-impl ObjectImpl for AppToolbar {}
-impl WidgetImpl for AppToolbar {}
-impl HeaderBarImpl for AppToolbar {}
+    // Botón exportar selección
+    let export_button = Button::with_label("Exportar Selección");
+    export_button.set_widget_name("export_selection");
+    export_button.set_sensitive(false);
+    toolbar.append(&export_button);
 
-glib::wrapper! {
-    pub struct AppToolbar(ObjectSubclass<imp::AppToolbar>)
-        @extends adw::HeaderBar, gtk4::Widget,
-        @implements gtk4::Accessible, gtk4::Buildable, gtk4::ConstraintTarget;
-}
+    // Botón exportar todo
+    let export_all_button = Button::with_label("Exportar Todo");
+    export_all_button.set_widget_name("export_all");
+    export_all_button.set_sensitive(false);
+    toolbar.append(&export_all_button);
 
-impl AppToolbar {
-    pub fn new() -> Self {
-        glib::Object::new()
-    }
+    // Botón limpiar
+    let clear_button = Button::with_label("Limpiar");
+    clear_button.set_widget_name("clear");
+    toolbar.append(&clear_button);
+
+    toolbar
 }

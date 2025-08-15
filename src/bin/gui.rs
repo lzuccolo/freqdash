@@ -1,6 +1,6 @@
-#![cfg(feature = "gui")]
+#![cfg(feature = "gtk")]
 use freqdash::gui;
 
 fn main() {
-    gui::app::run();
+    gui::run();
 }
