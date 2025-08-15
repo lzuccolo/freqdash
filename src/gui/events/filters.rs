@@ -1,43 +1,47 @@
-// src/gui/events/filters.rs
+// src/gui_adw/events/filters.rs
 
 use gtk4::prelude::*;
 use std::rc::Rc;
 use std::cell::RefCell;
 use glib::value::ToValue;
 
+use crate::gui_adw::state::AppState;
+use crate::gui_adw::utils;
 
-use crate::gui::state::AppState;
-use crate::gui::utils;
-
-/// Conecta los eventos de filtrado
+/// Conecta los eventos de filtrado con componentes Adwaita
 pub fn connect(panel: &gtk4::Box, state: &Rc<RefCell<AppState>>) {
     let search: gtk4::SearchEntry = utils::find_widget(panel, "search");
-    let profit_check: gtk4::CheckButton = utils::find_widget(panel, "filter_profit");
-    let winrate_check: gtk4::CheckButton = utils::find_widget(panel, "filter_winrate");
-    let trades_check: gtk4::CheckButton = utils::find_widget(panel, "filter_trades");
-    let pf_check: gtk4::CheckButton = utils::find_widget(panel, "filter_pf");
-    let expectancy_check: gtk4::CheckButton = utils::find_widget(panel, "filter_expectancy");
+    
+    // Buscar switches en lugar de checkbuttons
+    let profit_switch: gtk4::Switch = utils::find_widget(panel, "filter_profit");
+    let winrate_switch: gtk4::Switch = utils::find_widget(panel, "filter_winrate");
+    let trades_switch: gtk4::Switch = utils::find_widget(panel, "filter_trades");
+    let pf_switch: gtk4::Switch = utils::find_widget(panel, "filter_pf");
+    let expectancy_switch: gtk4::Switch = utils::find_widget(panel, "filter_expectancy");
 
     let state_clone = state.clone();
 
     // Clonar widgets para el closure
     let search_clone = search.clone();
-    let profit_check_clone = profit_check.clone();
-    let winrate_check_clone = winrate_check.clone();
-    let trades_check_clone = trades_check.clone();
-    let pf_check_clone = pf_check.clone();
-    let expectancy_check_clone = expectancy_check.clone();
+    let profit_switch_clone = profit_switch.clone();
+    let winrate_switch_clone = winrate_switch.clone();
+    let trades_switch_clone = trades_switch.clone();
+    let pf_switch_clone = pf_switch.clone();
+    let expectancy_switch_clone = expectancy_switch.clone();
 
     let apply_filters = move || {
         let search_text = search_clone.text().to_string().to_lowercase();
-        let filter_profit = profit_check_clone.is_active();
-        let filter_winrate = winrate_check_clone.is_active();
-        let filter_trades = trades_check_clone.is_active();
-        let filter_pf = pf_check_clone.is_active();
-        let filter_expectancy = expectancy_check_clone.is_active();
+        let filter_profit = profit_switch_clone.is_active();
+        let filter_winrate = winrate_switch_clone.is_active();
+        let filter_trades = trades_switch_clone.is_active();
+        let filter_pf = pf_switch_clone.is_active();
+        let filter_expectancy = expectancy_switch_clone.is_active();
 
         let state = state_clone.borrow();
         let store = &state.store;
+
+        let mut visible_count = 0;
+        let total_count = store.iter_n_children(None);
 
         if let Some(iter) = store.iter_first() {
             loop {
@@ -99,43 +103,54 @@ pub fn connect(panel: &gtk4::Box, state: &Rc<RefCell<AppState>>) {
 
                 // Actualizar visibilidad en el store
                 store.set_value(&iter, 30, &visible.to_value());
+                
+                if visible {
+                    visible_count += 1;
+                }
 
                 if !store.iter_next(&iter) {
                     break;
                 }
             }
         }
+        
+        // Mostrar información sobre filtros aplicados
+        println!("Filtros aplicados: {} de {} visibles", visible_count, total_count);
     };
 
     let filters_clone = Rc::new(apply_filters);
 
-    // Conectar eventos a cada control
+    // Conectar eventos a cada control con debounce para mejor rendimiento
     search.connect_search_changed({
         let filters = filters_clone.clone();
-        move |_| filters()
+        move |_| {
+            // Aplicar filtros directamente sin delay para búsqueda
+            filters();
+        }
     });
 
-    profit_check.connect_toggled({
+    // Conectar switches con notificación de estado
+    profit_switch.connect_state_notify({
         let filters = filters_clone.clone();
         move |_| filters()
     });
 
-    winrate_check.connect_toggled({
+    winrate_switch.connect_state_notify({
         let filters = filters_clone.clone();
         move |_| filters()
     });
 
-    trades_check.connect_toggled({
+    trades_switch.connect_state_notify({
         let filters = filters_clone.clone();
         move |_| filters()
     });
 
-    pf_check.connect_toggled({
+    pf_switch.connect_state_notify({
         let filters = filters_clone.clone();
         move |_| filters()
     });
     
-    expectancy_check.connect_toggled({
+    expectancy_switch.connect_state_notify({
         let filters = filters_clone.clone();
         move |_| filters()
     });

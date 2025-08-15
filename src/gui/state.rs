@@ -1,38 +1,34 @@
-use gtk4::ListStore;
-use std::cell::RefCell;
-use std::rc::Rc;
+// src/gui_adw/state.rs
+
+use gtk4::{TreeModelFilter, ListStore};
 use crate::backtest::model::StrategyGridRow;
 
-/// Estado compartido de la aplicación
+#[derive(Clone)]
 pub struct AppState {
-    pub store: ListStore,
-    pub results: Vec<StrategyGridRow>,
     pub is_loading: bool,
+    pub results: Vec<StrategyGridRow>,
+    pub store: ListStore,
+    pub filter_model: TreeModelFilter,
 }
 
 impl AppState {
-    /// Crea una nueva instancia del estado de la aplicación
-    pub fn new(store: ListStore) -> Rc<RefCell<Self>> {
-        Rc::new(RefCell::new(Self {
-            store,
-            results: Vec::new(),
+    pub fn new(store: ListStore, filter_model: TreeModelFilter) -> Self { // <--- MODIFICAR CONSTRUCTOR
+        Self {
             is_loading: false,
-        }))
+            results: Vec::new(),
+            store,
+            filter_model,
+        }
     }
-    
-    /// Limpia todos los datos
+
     pub fn clear(&mut self) {
-        self.store.clear();
         self.results.clear();
-        self.is_loading = false;
     }
-    
-    /// Verifica si hay resultados
+
     pub fn has_results(&self) -> bool {
         !self.results.is_empty()
     }
-    
-    /// Obtiene el número de resultados
+
     pub fn results_count(&self) -> usize {
         self.results.len()
     }
