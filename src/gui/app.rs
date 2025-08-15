@@ -1,4 +1,4 @@
-// src/gui_adw/app.rs
+// src/gui/app.rs
 use adw::{NavigationPage, NavigationSplitView};
 use gtk4::prelude::*;
 use gtk4::Button;
@@ -9,13 +9,13 @@ use std::rc::Rc;
 use std::sync::mpsc;
 use tokio::runtime::Runtime;
 
-use crate::gui_adw::state::AppState;
-use crate::gui_adw::{events, ui, utils};
+use crate::gui::state::AppState;
+use crate::gui::{events, ui, utils};
 use crate::{config, db};
 
 use crate::backtest::logic::get_grid_summary;
 use crate::backtest::model::{GridQuery, StrategyGridRow};
-use crate::gui_adw::events::query::{self, BATCH_SIZE};
+use crate::gui::events::query::{self, BATCH_SIZE};
 
 static TOKIO_RUNTIME: OnceCell<Runtime> = OnceCell::new();
 

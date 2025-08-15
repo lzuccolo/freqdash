@@ -1,4 +1,4 @@
-// src/gui_adw/mod.rs
+// src/gui/mod.rs
 
 pub mod app;
 pub mod events;

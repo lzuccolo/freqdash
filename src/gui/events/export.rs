@@ -1,4 +1,4 @@
-// src/gui_adw/events/export.rs
+// src/gui/events/export.rs
 
 use adw::HeaderBar;
 use gtk4::prelude::*;
@@ -9,8 +9,8 @@ use std::rc::Rc;
 
 use crate::backtest::logic::export_summary_to_csv;
 use crate::backtest::model::StrategyGridRow;
-use crate::gui_adw::state::AppState;
-use crate::gui_adw::utils;
+use crate::gui::state::AppState;
+use crate::gui::utils;
 
 pub fn connect(
     header_bar: &HeaderBar,

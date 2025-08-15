@@ -1,4 +1,4 @@
-// src/gui_adw/events/query.rs
+// src/gui/events/query.rs
 
 use gtk4::prelude::*;
 use gtk4::{
@@ -14,9 +14,9 @@ use tokio::runtime::Runtime;
 
 use crate::backtest::logic::get_grid_summary;
 use crate::backtest::model::{GridQuery, StrategyGridRow};
-use crate::gui_adw::app::{get_runtime, DatabaseCommand};
-use crate::gui_adw::state::AppState;
-use crate::gui_adw::utils;
+use crate::gui::app::{get_runtime, DatabaseCommand};
+use crate::gui::state::AppState;
+use crate::gui::utils;
 use glib::value::ToValue;
 
 pub const BATCH_SIZE: usize = 200;

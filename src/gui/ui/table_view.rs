@@ -1,4 +1,4 @@
-// src/gui_adw/ui/table_view.rs
+// src/gui/ui/table_view.rs
 
 use glib::Type;
 use gtk4::pango::Style;

@@ -14,11 +14,11 @@ cargo build --release --features gtk --bin gui
 
 # Adwaita version
 echo "📦 Compilando versión Adwaita..."
-cargo build --release --features adwaita --bin gui_adw
+cargo build --release --features adwaita --bin gui
 
 echo "✅ Compilación completada!"
 echo ""
 echo "Binarios disponibles en target/release/:"
 echo "  - cli      : Versión de línea de comandos"
 echo "  - gui      : Versión GTK4 tradicional"
-echo "  - gui_adw  : Versión con libadwaita (moderna)"
+echo "  - gui  : Versión con libadwaita (moderna)"

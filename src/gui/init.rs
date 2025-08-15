@@ -1,7 +1,7 @@
-// src/gui_adw/init.rs
+// src/gui/init.rs
 
 use crate::config;
-use crate::gui_adw::app;
+use crate::gui::app;
 use std::sync::Arc;
 use tokio::runtime::Runtime;
 

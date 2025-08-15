@@ -1,4 +1,4 @@
-// src/gui_adw/ui/mod.rs
+// src/gui/ui/mod.rs
 
 pub mod left_panel;
 pub mod right_panel;

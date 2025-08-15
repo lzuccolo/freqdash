@@ -1,4 +1,4 @@
-// src/gui_adw/events/mod.rs
+// src/gui/events/mod.rs
 
 pub mod export;
 pub mod filters;

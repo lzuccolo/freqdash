@@ -1,4 +1,4 @@
-// src/gui_adw/ui/right_panel.rs
+// src/gui/ui/right_panel.rs
 
 use super::{status_bar, table_view};
 use gtk4::prelude::*;

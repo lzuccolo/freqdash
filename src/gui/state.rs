@@ -1,4 +1,4 @@
-// src/gui_adw/state.rs
+// src/gui/state.rs
 
 use gtk4::{TreeModelFilter, ListStore};
 use crate::backtest::model::StrategyGridRow;

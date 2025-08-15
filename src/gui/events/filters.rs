@@ -1,12 +1,12 @@
-// src/gui_adw/events/filters.rs
+// src/gui/events/filters.rs
 
 use gtk4::prelude::*;
 use std::rc::Rc;
 use std::cell::RefCell;
 use glib::value::ToValue;
 
-use crate::gui_adw::state::AppState;
-use crate::gui_adw::utils;
+use crate::gui::state::AppState;
+use crate::gui::utils;
 
 /// Conecta los eventos de filtrado con componentes Adwaita
 pub fn connect(panel: &gtk4::Box, state: &Rc<RefCell<AppState>>) {

@@ -26,7 +26,7 @@ cargo build --release --features cli --bin cli
 cargo build --release --features gtk --bin gui
 
 # Versión con Libadwaita
-cargo build --release --features adwaita --bin gui_adw
+cargo build --release --features adwaita --bin gui
 ```
 
 ## 🎯 Ejecución
@@ -39,7 +39,7 @@ cargo build --release --features adwaita --bin gui_adw
 ./target/release/gui
 
 # Libadwaita (moderna)
-./target/release/gui_adw
+./target/release/gui
 ```
 
 ## 🔄 Principales Diferencias
@@ -153,10 +153,10 @@ group.add(&row);
 
 ```bash
 # Ver mensajes de GTK/Adwaita
-GTK_DEBUG=interactive ./target/release/gui_adw
+GTK_DEBUG=interactive ./target/release/gui
 
 # Inspector de GTK
-GTK_DEBUG=interactive GTK_INSPECTOR=1 ./target/release/gui_adw
+GTK_DEBUG=interactive GTK_INSPECTOR=1 ./target/release/gui
 ```
 
 ## 📈 Métricas de la Migración

@@ -1,4 +1,4 @@
-// src/gui_adw/ui/left_panel.rs
+// src/gui/ui/left_panel.rs
 
 use gtk4::prelude::*;
 use gtk4::{

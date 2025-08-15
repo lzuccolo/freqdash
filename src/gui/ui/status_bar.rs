@@ -1,4 +1,4 @@
-// src/gui_adw/ui/status_bar.rs
+// src/gui/ui/status_bar.rs
 
 use gtk4::prelude::*;
 use gtk4::{Box, Label, Orientation, Spinner};

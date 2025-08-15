@@ -1,4 +1,4 @@
-// src/gui_adw/utils.rs
+// src/gui/utils.rs
 
 use gtk4::prelude::*;
 use libadwaita::prelude::*;

@@ -1,4 +1,4 @@
-// src/gui_adw/ui/toolbar.rs
+// src/gui/ui/toolbar.rs
 
 use gtk4::prelude::*;
 use gtk4::{Box, Button, Label, Orientation};

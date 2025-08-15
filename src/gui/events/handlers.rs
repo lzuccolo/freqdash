@@ -1,4 +1,4 @@
-// src/gui_adw/events/handlers.rs
+// src/gui/events/handlers.rs
 use libadwaita::HeaderBar;
 use gtk4::{Box as GtkBox, TreeView};
 use std::cell::RefCell;
@@ -6,8 +6,8 @@ use std::rc::Rc;
 use std::sync::mpsc; // <-- Use the standard library's MPSC
 
 use super::{export, filters, query};
-use crate::gui_adw::app::DatabaseCommand;
-use crate::gui_adw::state::AppState;
+use crate::gui::app::DatabaseCommand;
+use crate::gui::state::AppState;
 
 pub fn connect_all(
     left_panel: &GtkBox,
